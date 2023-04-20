@@ -1,0 +1,59 @@
+## The following queries have been run to check the number of unique Id in each table
+
+SELECT DISTINCT Id FROM `newproject-377218.Bellabeat.dailyActivity`
+SELECT DISTINCT Id FROM `newproject-377218.Bellabeat.dailyCalories_merged`
+SELECT DISTINCT Id FROM `newproject-377218.Bellabeat.dailyIntensities_merged`
+SELECT DISTINCT Id FROM `newproject-377218.Bellabeat.dailySteps_merged`
+SELECT DISTINCT Id FROM `newproject-377218.Bellabeat.sleepDay`
+SELECT DISTINCT Id FROM `newproject-377218.Bellabeat.weightLogInfo`
+
+
+## For finding activity level and calories burnt
+
+SELECT 
+Id, ActivityDate,Calories, TotalSteps, TotalDistance, TrackerDistance, LoggedActivitiesDistance, VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance,SedentaryActiveDistance, VeryActiveMinutes, FairlyActiveMinutes, LightlyActiveMinutes, SedentaryMinutes
+FROM 
+`newproject-377218.Bellabeat.dailyActivity`
+WHERE 
+VeryActiveDistance+ModeratelyActiveDistance+LightActiveDistance <> 0 
+AND VeryActiveMinutes+FairlyActiveMinutes+LightlyActiveMinutes <> 0
+ORDER BY TotalSteps DESC;
+
+
+## For finding activity level and calories burnt
+
+SELECT 
+Id, ActivityDate,Calories, TotalSteps, TotalDistance, TrackerDistance, LoggedActivitiesDistance, (VeryActiveDistance+ModeratelyActiveDistance+LightActiveDistance) 
+AS TotalActiveDistance,SedentaryActiveDistance, (VeryActiveMinutes+FairlyActiveMinutes+LightlyActiveMinutes) 
+AS TotalActiveMinutes, SedentaryMinutes
+FROM 
+`newproject-377218.Bellabeat.dailyActivity`;
+
+
+## For finding relationship between activity level and sleep time
+
+SELECT 
+activity.Id, ActivityDate,Calories, TotalSleepRecords, TotalMinutesAsleep, TotalTimeInBed, TotalSteps, TotalDistance, TrackerDistance, LoggedActivitiesDistance, (VeryActiveDistance + ModeratelyActiveDistance) AS ActiveDistance, (LightActiveDistance+SedentaryActiveDistance) AS non_ActiveDistance, (VeryActiveMinutes+FairlyActiveMinutes) AS ActiveMinutes, (LightlyActiveMinutes+SedentaryMinutes) AS non_ActiveMinutes
+FROM 
+`newproject-377218.Bellabeat.dailyActivity` 
+AS activity
+INNER JOIN `newproject-377218.Bellabeat.sleepDay` 
+AS sleep
+ON activity.Id = sleep.Id 
+AND activity.ActivityDate = sleep.SleepDay;
+
+
+
+## For finding relationship between activiy and weight/BMI
+
+SELECT 
+activity.Id, Calories, BMI, TotalSteps, TotalDistance, TrackerDistance, LoggedActivitiesDistance, VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance,SedentaryActiveDistance, VeryActiveMinutes, FairlyActiveMinutes, LightlyActiveMinutes, SedentaryMinutes
+FROM 
+`newproject-377218.Bellabeat.dailyActivity` 
+AS activity
+INNER JOIN 
+`newproject-377218.Bellabeat.weightLogInfo` 
+AS weight
+ON activity.Id = weight.Id 
+AND activity.ActivityDate = weight.Date;
+
