@@ -1,0 +1,250 @@
+---
+title: "Bellabeat Case Study 2 RMD"
+author: "Malay Raj"
+date: "2023-04-07"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+## BELLABEAT CASE STUDY
+
+This analysis is based on the Bellabeat case study "'Sophisticated, Clear,
+and Polished': Bellabeat data and Data Visualization".
+
+## PREPARE:
+
+## Installing required packages
+
+Installing and loading common packages and libraries.
+
+```{r}
+install.packages("tidyverse")
+```
+
+```{r}
+install.packages("janitor")
+```
+
+```{r}
+install.packages("ggplot2")
+```
+
+```{r}
+install.packages("skimr")
+```
+
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(ggplot2)
+library(skimr)
+```
+
+
+
+## COLLECTING DATA
+
+uploading fitabase datasets(csv files)
+Here we'll create a dataframes named 'daily_activity','sleep_day','weight_log' and read in the CSV files from the datasets.
+
+```{r}
+daily_activity <- read.csv("C:/Users/KIIT/OneDrive/Desktop/Bellabeat/Fitabase Data 4.12.16-5.12.16/updated Datasets/dailyActivity_merged.csv")
+sleep_day <- read.csv("C:/Users/KIIT/OneDrive/Desktop/Bellabeat/Fitabase Data 4.12.16-5.12.16/updated Datasets/sleepDay - sleepDay_merged.csv")
+weight_log <- read.csv("C:/Users/KIIT/OneDrive/Desktop/Bellabeat/Fitabase Data 4.12.16-5.12.16/updated Datasets/weightLogInfo - weightLogInfo_merged.csv")
+```
+
+## PROCESS:
+
+## EXPLORING A FEW KEY TABLES
+
+Take a look at all the datas.
+
+```{r}
+head(daily_activity)
+head(sleep_day)
+head(weight_log)
+```
+
+Identifying all the columns in the datasets.
+
+```{r}
+colnames(daily_activity)
+
+colnames(sleep_day)
+
+colnames(weight_log)
+```
+
+Note that both datasets have the 'Id' field - this can be used to merge the datasets.
+
+## UNDERSTANDING SOME SUMMARY STATISTICS
+How many unique participants are there in each dataframe? It looks like there may be more participants in the daily activity dataset than the sleep day dataset and weight log dataset.
+
+```{r}
+n_distinct(daily_activity$Id)
+n_distinct(sleep_day$Id)
+n_distinct(weight_log$Id)
+```
+
+How many observations are there in each dataframe?
+
+```{r}
+nrow(daily_activity)
+nrow(sleep_day)
+nrow(weight_log)
+```
+
+What are some quick summary statistics we'd want to know about each data frame?
+Let's find out that.
+For the daily activity dataframe:
+
+```{r}
+daily_activity %>%  
+  select(TotalSteps,
+         TotalDistance,
+         SedentaryMinutes) %>%
+  summary()
+```
+
+For the sleep day dataframe:
+
+```{r}
+sleep_day %>%  
+  select(TotalSleepRecords,
+         TotalMinutesAsleep,
+         TotalTimeInBed) %>%
+  summary()
+```
+
+For the weight log dataframe:
+
+```{r}
+weight_log %>%  
+  select(WeightKg,
+         WeightPounds,
+         BMI) %>%
+  summary()
+```
+
+## ANALYZE:
+We then run a quick summary on the various data frames by using the skim_without_chart() function to  provide broader overview of a data frames.
+
+```{r}
+skim_without_charts(daily_activity)
+
+skim_without_charts(sleep_day)
+
+skim_without_charts(weight_log)
+```
+
+## Exploring Avg sleep time $ Avg time in bed
+
+```{r}
+Avg_minutes_asleep <- sleep_day %>% summarize(avg_sleeptime = mean(TotalMinutesAsleep))
+```
+
+```{r}
+Avg_minutes_asleep
+```
+
+```{r}
+Avg_TimeInBed <- sleep_day %>%
+summarize(avg_TimeInBed = mean(TotalTimeInBed))
+```
+
+```{r}
+Avg_TimeInBed
+```
+
+
+Above exploration showes the average participants stayed up 40 minutes in bed before they fell asleep.
+
+I converted the ActivityDate column to days of the week (Monday-Friday), from the daily_activity  data set
+
+```{r}
+daily_activity <- daily_activity %>% 
+  mutate(weekday1 = weekdays(as.Date(ActivityDate, "%m/%d/%Y")))
+
+glimpse(daily_activity)
+```
+
+```{r}
+daily_activity$weekday1 <- ordered(daily_activity$weekday1, levels=c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
+```
+
+```{r}
+activity_data <- daily_activity %>% 
+  group_by(weekday1) %>% 
+  summarize(count_of = n())
+
+glimpse(activity_data)
+```
+
+## VISUALIZATION
+
+Let's see the number of times the users track their activities in a week.
+
+```{r}
+ggplot(activity_data, aes(x=weekday1, y=count_of)) +
+  geom_bar(stat="identity",color="black",fill="#0000FF") +
+  labs(title="Tracker user count across the week", x="Day of the week", y="Count") +
+  geom_label(aes(label=count_of),color="black")
+```
+
+The results shows that most of the activities recorded were on Tuesday, Wednesday and Thursday.
+
+## Plotting a few other explorations.
+
+Let's find out what's the relationship between steps taken in a day and sedentary minutes.
+
+```{r}
+ggplot(data=daily_activity, aes(x=TotalSteps, y=SedentaryMinutes, color=Calories)) + geom_point() + ggtitle("TotalSteps VS SedentaryMinutes") + geom_smooth(method="lm",color="blue")
+```
+
+Observing relationship between steps taken and calories burned.
+
+```{r}
+mean_steps <- mean(daily_activity$TotalSteps)
+mean_steps
+
+mean_calories <- mean(daily_activity$Calories)
+mean_calories
+```
+
+```{r}
+ggplot(data=daily_activity, aes(x=TotalSteps, y=Calories, color=Calories)) + geom_point() + ggtitle("Calories burned for every step taken") + geom_smooth(method="lm", color="black")
+```
+
+The visualization above shows a positive correlation between the steps taken and the calories burnt.
+
+
+Let's find out what's the relationship between minutes asleep and time in bed.
+
+```{r}
+ggplot(data=sleep_day, aes(x=TotalMinutesAsleep, y=TotalTimeInBed)) + geom_point() + ggtitle("Time Asleep Vs Time in bed") + geom_smooth(method="lm") + geom_jitter()
+```
+
+Relationship between being sedentary, light, fairly light, very active minutes and calories burned.
+
+```{r}
+ggplot(data=daily_activity, aes(x=SedentaryMinutes, y=Calories, color=Calories)) + geom_point() + ggtitle("SedentaryMinutes VS Calories") + geom_smooth(method="loess",color="blue")
+```
+
+As we can see that there are lesser burned calories as sedentary minutes increased.
+
+```{r}
+ggplot(data=combined_data, aes(x=LightlyActiveMinutes, y=Calories, color=Calories)) + geom_point() + ggtitle("LightActivMinutes VS Calories") + geom_smooth(method="loess",color="blue")
+```
+
+```{r}
+ggplot(data=daily_activity, aes(x=FairlyActiveMinutes, y=Calories, color=Calories)) + geom_point() + ggtitle("FairlyActiveMinutes Vs Calories") + geom_smooth(method="loess",color="blue")
+```
+
+```{r}
+ggplot(data=combined_data, aes(x=VeryActiveMinutes, y=Calories, color=Calories)) + geom_point() + ggtitle("VeryActiveMinutes VS Calories") + geom_smooth(method="loess",color="blue")
+```
+
+Above vizualization is showing positive correlation between very active minutes and calories burned.
+
